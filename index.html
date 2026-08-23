@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>سين جيم - النسخة الفاخرة</title>
+    <style>
+        :root {
+            --bg-dark: #0a0f1d;
+            --card-bg: #161e31;
+            --accent-blue: #38bdf8;
+            --accent-gold: #f59e0b;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; user-select: none; }
+        
+        body {
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            margin: 0; padding: 12px;
+            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .container { width: 100%; max-width: 500px; }
+
+        /* شاشة الإعدادات والبدء */
+        .setup-card {
+            background: var(--card-bg);
+            border: 2px solid #2a364f;
+            border-radius: 20px; padding: 20px;
+            text-align: center; margin-top: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%; padding: 14px; margin: 8px 0;
+            border-radius: 12px; border: 2px solid #3b4f74;
+            background: #0b1326; color: #fff; font-size: 1.1rem; text-align: center;
+            font-weight: bold;
+        }
+
+        .cat-select-grid {
+            display: grid; grid-template-columns: 1fr; gap: 10px; margin: 15px 0;
+        }
+
+        .cat-item {
+            background: #1e293b; padding: 14px; border-radius: 12px;
+            border: 2px solid #334155; cursor: pointer; font-size: 1.05rem; font-weight: bold;
+            color: #f1f5f9; display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        .cat-item.selected { 
+            border-color: var(--accent-blue); 
+            background: #0c2d48; 
+            color: var(--accent-blue);
+        }
+
+        /* اللوحة الرئيسية */
+        .scoreboard {
+            display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px;
+        }
+
+        .team-box {
+            flex: 1; background: var(--card-bg);
+            border: 2px solid #2a364f; border-radius: 16px;
+            padding: 10px; text-align: center;
+        }
+        .team-box.active {
+            border-color: var(--accent-blue);
+            background: #0c2b4a;
+        }
+
+        .team-name { font-size: 1rem; color: #94a3b8; font-weight: bold; }
+        .team-score { font-size: 2rem; font-weight: 800; color: var(--accent-gold); }
+
+        .game-board {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+        }
+
+        .cat-header {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: var(--accent-blue); font-weight: bold; font-size: 0.85rem;
+            padding: 8px 2px; border-radius: 10px; text-align: center;
+            min-height: 48px; display: flex; align-items: center; justify-content: center;
+        }
+
+        .q-btn {
+            background: var(--card-bg); border: 2px solid #2a364f;
+            color: var(--accent-gold); font-size: 1.2rem; font-weight: 800;
+            padding: 12px 0; border-radius: 10px; text-align: center;
+        }
+        .q-btn.used { opacity: 0.2; border-color: transparent; color: #fff; background: #000; }
+
+        /* نافذة السؤال - ألوان وتباين مريح وواضح جداً */
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+            display: none; justify-content: center; align-items: center; padding: 15px; z-index: 99;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 20px; padding: 20px; width: 100%; max-width: 440px; text-align: center;
+            color: #0f172a;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .q-img {
+            width: 100%; max-height: 180px; object-fit: cover;
+            border-radius: 12px; margin: 10px 0; border: 1px solid #cbd5e1;
+        }
+
+        .btn-main {
+            background: #2563eb;
+            color: white; border: none; padding: 14px; border-radius: 12px;
+            font-size: 1.1rem; font-weight: bold; width: 100%; margin-top: 10px;
+        }
+
+        .btn-double {
+            background: var(--accent-gold);
+            color: #000; font-weight: 900; margin-bottom: 10px;
+        }
+
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .btn-success { background: var(--accent-green); }
+        .btn-danger { background: var(--accent-red); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 style="text-align: center; font-size: 2rem; margin: 10px 0;">
+        <span style="color: var(--accent-blue);">سِين</span> <span style="color: var(--accent-gold);">جِيم</span>
+    </h1>
+
+    <!-- شاشة إعداد الفرق والتصنيفات -->
+    <div id="setup-screen" class="setup-card">
+        <h3 style="margin-top: 0;">🏆 أسماء الفرق</h3>
+        <input type="text" id="t1-input" value="الفريق الأول">
+        <input type="text" id="t2-input" value="الفريق الثاني">
+
+        <h3 style="margin-top: 20px; margin-bottom: 5px;">📚 اختر 3 تصنيفات للعب:</h3>
+        <p style="margin-top: 0; font-size: 0.85rem; color: #94a3b8;">اضغط على التصنيف للتحديد</p>
+        
+        <div class="cat-select-grid" id="cat-selector"></div>
+
+        <button class="btn-main" onclick="startGame()">ابدأ التحدي 🔥</button>
+    </div>
+
+    <!-- شاشة اللعبة الرئيسية -->
+    <div id="game-screen" style="display: none;">
+        <div class="scoreboard">
+            <div class="team-box active" id="box-0">
+                <div class="team-name" id="name-0">الفريق 1</div>
+                <div class="team-score" id="score-0">0</div>
+            </div>
+            <div class="team-box" id="box-1">
+                <div class="team-name" id="name-1">الفريق 2</div>
+                <div class="team-score" id="score-1">0</div>
+            </div>
+        </div>
+
+        <div class="game-board" id="board"></div>
+    </div>
+</div>
+
+<!-- نافذة السؤال -->
+<div class="modal" id="modal">
+    <div class="modal-card">
+        <div id="m-cat" style="color: #2563eb; font-weight: bold; font-size: 1rem;"></div>
+        <div id="m-pts" style="color: #d97706; font-size: 1.6rem; font-weight: 800; margin: 2px 0;"></div>
+        
+        <button class="btn-main btn-double" id="dbl-btn" onclick="applyDouble()">🎯 تفعيل دبل النقاط (Double)</button>
+
+        <img id="m-img" class="q-img" src="" style="display: none;">
+
+        <p id="m-q" style="font-size: 1.25rem; font-weight: 700; color: #0f172a; line-height: 1.5; margin: 15px 0;"></p>
+        
+        <div id="m-a" style="background: #f0fdf4; border: 2px solid #22c55e; color: #15803d; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 1.1rem; display: none; margin-bottom: 15px;"></div>
+
+        <button class="btn-main" id="show-ans-btn" onclick="showAnswer()">كشف الإجابة 👁️</button>
+
+        <div class="action-btns" id="eval-btns" style="display: none;">
+            <button class="btn-main btn-success" onclick="resolveQ(true)">إجابة صحيحة 👍</button>
+            <button class="btn-main btn-danger" onclick="resolveQ(false)">إجابة خاطئة 👎</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const categoryBank = [
+        {
+            title: "⚽ رياضات وأندية",
+            q: [
+                { pts: 200, q: "كم عدد أفراد فريق كرة القدم داخل الملعب؟", a: "11 لاعب", img: "" },
+                { pts: 400, q: "ما اسم الملعب الموضح في الصورة؟", a: "ملعب المملكة أرينا", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500" },
+                { pts: 600, q: "ما هي الدولة الفائزة بكأس العالم 2022؟", a: "الأرجنتين", img: "" },
+                { pts: 800, q: "من هو اللاعب الموضح في الصورة؟", a: "ليونيل ميسي", img: "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?w=500" }
+            ]
+        },
+        {
+            title: "🇸🇦 معالم ومدن",
+            q: [
+                { pts: 200, q: "ما هي عاصمة المملكة العربية السعودية؟", a: "الرياض", img: "" },
+                { pts: 400, q: "ما اسم البرج الشهير الظاهر في الصورة؟", a: "برج المملكة (الرياض)", img: "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?w=500" },
+                { pts: 600, q: "في أي محافظة تقع ديرة آل مسلمة؟", a: "النماص", img: "" },
+                { pts: 800, q: "ما اسم القلعة أو الحصن التاريخي الموضح في الصورة؟", a: "قصر المصمك", img: "https://images.unsplash.com/photo-1590076175571-4b5459efb08c?w=500" }
+            ]
+        },
+        {
+            title: "🚗 سيارات ومحركات",
+            q: [
+                { pts: 200, q: "ما اسم هذه السيارة الموضحة في الصورة؟", a: "جيلي بريفيس (Geely Preface)", img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500" },
+                { pts: 400, q: "ما معنى رمز CC في محركات السيارات؟", a: "السعة اللترية للمحرك", img: "" },
+                { pts: 600, q: "ما هي الدولة المصنعة لسيارات جيلي؟", a: "الصين", img: "" },
+                { pts: 800, q: "ما اسم الجزء الموضح في صورة المحرك هذا؟", a: "التوربو (Turbo)", img: "https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=500" }
+            ]
+        },
+        {
+            title: "♟️ ألعاب وتحديات",
+            q: [
+                { pts: 200, q: "كم عدد مربعات رقعة الشطرنج؟", a: "64 مربع", img: "" },
+                { pts: 400, q: "ما هي أغلى قطعة في لعبة الشطرنج؟", a: "الملك (الشيخ)", img: "https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=500" },
+                { pts: 600, q: "كم عدد أوراق الكوتشينة (البلوت) الكاملة؟", a: "52 ورقة (32 في البلوت)", img: "" },
+                { pts: 800, q: "ما هي الحركة الخاصة للشطرنج الموضحة بالصورة؟", a: "التبييت (Castling)", img: "https://images.unsplash.com/photo-1586165368502-1bad197a6461?w=500" }
+            ]
+        },
+        {
+            title: "🎬 سينما وأنمي",
+            q: [
+                { pts: 200, q: "كم عدد أجزاء سلسلة أفلام هاري بوتر؟", a: "8 أجزاء", img: "" },
+                { pts: 400, q: "من هي هذه الشخصية في الصورة؟", a: "المفتش ميغوري (المحقق كونان)", img: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500" },
+                { pts: 600, q: "ما اسم المسلسل الكوري الشهير المستوحى من ألعاب الأطفال؟", a: "لعبة الحبار (Squid Game)", img: "" },
+                { pts: 800, q: "ما اسم الفيلم الموضح في هذه اللقطة؟", a: "Inception", img: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500" }
+            ]
+        },
+        {
+            title: "🧠 معلومات عامة",
+            q: [
+                { pts: 200, q: "ما هو أسرع حيوان بري في العالم؟", a: "الفهد", img: "" },
+                { pts: 400, q: "ما هو اسم هذا النبات الظاهر في الصورة؟", a: "الصبار", img: "https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=500" },
+                { pts: 600, q: "ما هي أكبر قارة في العالم مساحة؟", a: "قارة آسيا", img: "" },
+                { pts: 800, q: "ما اسم هذا المفهوم العلمي الموضح بالرسم؟", a: "الجاذبية الأرضية", img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=500" }
+            ]
+        }
+    ];
+
+    let selectedCats = [];
+    let teams = [{ name: "", score: 0 }, { name: "", score: 0 }];
+    let currentTurn = 0;
+    let activeQ = null;
+    let isDouble = false;
+
+    // بناء قائمة اختيار التصنيفات
+    const catSelector = document.getElementById('cat-selector');
+    categoryBank.forEach((c, idx) => {
+        const item = document.createElement('div');
+        item.className = 'cat-item';
+        item.id = `cat-item-${idx}`;
+        item.innerHTML = `<span>${c.title}</span> <span id="check-${idx}">⚪</span>`;
+        item.onclick = () => toggleCat(idx);
+        catSelector.appendChild(item);
+    });
+
+    function toggleCat(idx) {
+        const el = document.getElementById(`cat-item-${idx}`);
+        const check = document.getElementById(`check-${idx}`);
+
+        if (selectedCats.includes(idx)) {
+            selectedCats = selectedCats.filter(i => i !== idx);
+            el.classList.remove('selected');
+            check.innerText = '⚪';
+        } else {
+            if (selectedCats.length < 3) {
+                selectedCats.push(idx);
+                el.classList.add('selected');
+                check.innerText = '✔️';
+            } else {
+                alert("تم اختيار 3 تصنيفات بالفعل! يمكنك إلغاء أحدهم لتغييره.");
+            }
+        }
+    }
+
+    function startGame() {
+        if (selectedCats.length < 3) {
+            alert("لطفاً اختر 3 تصنيفات للبدء!");
+            return;
+        }
+
+        teams[0].name = document.getElementById('t1-input').value || "الفريق 1";
+        teams[1].name = document.getElementById('t2-input').value || "الفريق 2";
+
+        document.getElementById('name-0').innerText = teams[0].name;
+        document.getElementById('name-1').innerText = teams[1].name;
+
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+
+        buildBoard();
+    }
+
+    function buildBoard() {
+        const board = document.getElementById('board');
+        board.innerHTML = '';
+
+        // رؤوس التصنيفات
+        selectedCats.forEach(cIdx => {
+            board.innerHTML += `<div class="cat-header">${categoryBank[cIdx].title}</div>`;
+        });
+
+        // إنشاء صفوف الأسئلة (200، 400، 600، 800)
+        [0, 1, 2, 3].forEach(qLevel => {
+            selectedCats.forEach(cIdx => {
+                const pts = categoryBank[cIdx].q[qLevel].pts;
+                board.innerHTML += `<div class="q-btn" id="btn-${cIdx}-${qLevel}" onclick="openQ(${cIdx}, ${qLevel})">${pts}</div>`;
+            });
+        });
+    }
+
+    function openQ(cIdx, qIdx) {
+        const btn = document.getElementById(`btn-${cIdx}-${qIdx}`);
+        if (btn.classList.contains('used')) return;
+
+        btn.classList.add('used');
+        btn.innerText = '✖';
+
+        activeQ = categoryBank[cIdx].q[qIdx];
+        isDouble = false;
+
+        document.getElementById('m-cat').innerText = categoryBank[cIdx].title;
+        document.getElementById('m-pts').innerText = activeQ.pts + " نقطة";
+        document.getElementById('m-q').innerText = activeQ.q;
+        document.getElementById('m-a').innerText = "الإجابة الصحيحة: " + activeQ.a;
+
+        const imgEl = document.getElementById('m-img');
+        if (activeQ.img && activeQ.img !== "") {
+            imgEl.src = activeQ.img;
+            imgEl.style.display = 'block';
+        } else {
+            imgEl.style.display = 'none';
+        }
+
+        document.getElementById('dbl-btn').style.display = 'block';
+        document.getElementById('m-a').style.display = 'none';
+        document.getElementById('eval-btns').style.display = 'none';
+        document.getElementById('show-ans-btn').style.display = 'block';
+
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function applyDouble() {
+        isDouble = true;
+        document.getElementById('m-pts').innerText = (activeQ.pts * 2) + " نقطة (دبل! 🔥)";
+        document.getElementById('dbl-btn').style.display = 'none';
+    }
+
+    function showAnswer() {
+        document.getElementById('m-a').style.display = 'block';
+        document.getElementById('show-ans-btn').style.display = 'none';
+        document.getElementById('dbl-btn').style.display = 'none';
+        document.getElementById('eval-btns').style.display = 'grid';
+    }
+
+    function resolveQ(isCorrect) {
+        const pts = isDouble ? activeQ.pts * 2 : activeQ.pts;
+
+        if (isCorrect) {
+            teams[currentTurn].score += pts;
+            document.getElementById(`score-${currentTurn}`).innerText = teams[currentTurn].score;
+        }
+
+        // التدوير بين الفريقين
+        currentTurn = currentTurn === 0 ? 1 : 0;
+        document.getElementById('box-0').classList.toggle('active', currentTurn === 0);
+        document.getElementById('box-1').classList.toggle('active', currentTurn === 1);
+
+        document.getElementById('modal').style.display = 'none';
+    }
+</script>
+</body>
+</html>
